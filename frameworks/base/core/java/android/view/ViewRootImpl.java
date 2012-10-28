@@ -3156,6 +3156,27 @@ public final class ViewRootImpl implements ViewParent,
             ensureTouchMode(true);
         }
 
+                     /**
+                      * Author: E John Feig
+                      * Re: Onskreen
+                      * Date: 28/10/2012
+                      *
+                      * Notifies the WindowManagerService to reshuffle its z-order before
+                      * dispatching events to the focused window.
+                      */
+                     try{
+                         //Only send Down Event. Touch will focus the window, rest will
+                         //be handled by the view/window.
+                         if(action == MotionEvent.ACTION_DOWN) {
+                             //If the window of this view already has the focus, no need
+                             //to trigger the java side processing of managing this event
+                             if(!mView.hasWindowFocus()) {
+                                 sWindowSession.handleFocusChange(mWindowAttributes.token);
+                             }
+                         }
+                     } catch (RemoteException e) {
+            	     }
+
         // Offset the scroll position.
         if (mCurScrollY != 0) {
             event.offsetLocation(0, mCurScrollY);
@@ -3223,6 +3244,26 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         final int action = event.getAction();
+                     /**
+                      * Author: E John Feig
+                      * Re: Onskreen
+                      * Date: 28/10/2012
+                      *
+                      * Notifies the WindowManagerService to reshuffle its z-order before
+                      * dispatching events to the focused window.
+                      */
+                     try{
+                         //Only send Down Event. Touch will focus the window, rest will
+                         //be handled by the view/window.
+                         if(action == MotionEvent.ACTION_DOWN) {
+                             //If the window of this view already has the focus, no need
+                             //to trigger the java side processing of managing this event
+                             if(!mView.hasWindowFocus()) {
+                                 sWindowSession.handleFocusChange(mWindowAttributes.token);
+                             }
+                         }
+                     } catch (RemoteException e) {
+            	     }
         final int metaState = event.getMetaState();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
@@ -4056,54 +4097,6 @@ public final class ViewRootImpl implements ViewParent,
         msg.obj = ri;
         mHandler.sendMessage(msg);
     }
-
-    /**
-     * Author: E. John Feig
-     * Date: 27/10/2012
-     *
-     * The following existed in the old code, but I'm not sure if it conflicts with 
-     * the Input Event Queue below. If it does strange things on input handling, take 
-     * a look at this block of code.
-     */
-    private long mInputEventReceiveTimeNanos;
-    private long mInputEventDeliverTimeNanos;
-    private long mInputEventDeliverPostImeTimeNanos;
-    private InputQueue.FinishedCallback mFinishedCallback;
-
-    private final InputHandler mInputHandler = new InputHandler() {
-        public void handleKey(KeyEvent event, InputQueue.FinishedCallback finishedCallback) {
-            startInputEvent(finishedCallback);
-            dispatchKey(event, true);
-        }
-
-        public void handleMotion(MotionEvent event, InputQueue.FinishedCallback finishedCallback) {
-                        /**
-                         * Author: Onskreen
-                         * Date: 17/02/2011
-                         *
-                         * Notifies the WindowManagerService to reshuffle its z-order before
-                         * dispatching events to the focused window.
-                         */
-            try{
-                                //Only send Down Event. Touch will focus the window, rest will
-                                //be handled by the view/window.
-                                if(event.getAction()==MotionEvent.ACTION_DOWN) {
-                                        //If the window of this view already has the focus, no need
-                                        //to trigger the java side processing of managing this event
-                                        if(!mView.hasWindowFocus()) {
-                                                sWindowSession.handleFocusChange(mWindowAttributes.token);
-                                        }
-                                }
-            } catch (RemoteException e) {
-            }
-            startInputEvent(finishedCallback);
-            dispatchMotion(event, true);
-        }
-    };
-    /**
-     * End block
-     */
-
 
     /**
      * Represents a pending input event that is waiting in a queue.
