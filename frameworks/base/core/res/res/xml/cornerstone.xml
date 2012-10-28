@@ -120,4 +120,27 @@
 			<gutter>4</gutter>
 		</portrait>
 	</layout>
+	<layout width="1920" height="1200">
+		<landscape>
+			<width>675</width>
+			<height>519</height>
+			<handler>
+				<width>38</width>
+			</handler>
+			<appheader>
+				<height>30</height>
+			</appheader>
+		</landscape>
+		<portrait>
+			<width>597</width>
+			<height>495</height>
+			<handler>
+				<width>38</width>
+			</handler>
+			<appheader>
+				<height>30</height>
+			</appheader>
+			<gutter>4</gutter>
+		</portrait>
+	</layout>
 </cornerstone>

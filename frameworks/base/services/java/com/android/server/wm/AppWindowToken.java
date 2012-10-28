@@ -20,6 +20,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_STARTING;
 
 import com.android.server.input.InputApplicationHandle;
 import com.android.server.wm.WindowManagerService.H;
+import com.android.server.wm.WindowManagerService.WindowPanel;
 
 import android.content.pm.ActivityInfo;
 import android.os.Message;

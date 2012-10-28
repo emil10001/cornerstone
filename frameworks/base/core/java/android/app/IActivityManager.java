@@ -658,28 +658,28 @@ public interface IActivityManager extends IInterface {
      *
      * Cornerstone specific transactions
      */
-    int CORNERSTONE_STATE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+141;
+    int CORNERSTONE_STATE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+152;
     /**
      * Author: Onskreen
      * Date: 28/02/2011
      *
      * Cornerstone specific transactions
      */
-    int CORNERSTONE_MANAGER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+142;
+    int CORNERSTONE_MANAGER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+153;
     /**
      * Author: Onskreen
      * Date: 28/02/2011
      *
      * Cornerstone specific transactions
      */
-    int CORNERSTONE_MANAGER_BROADCAST_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+143;
+    int CORNERSTONE_MANAGER_BROADCAST_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+154;
     /**
      * Author: Onskreen
      * Date: 08/03/2011
      *
      * Cornerstone specific transactions
      */
-    int START_CORNERSTONE_APP_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+144;
+    int START_CORNERSTONE_APP_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+155;
 
     /**
      * Author: Onskreen
@@ -687,6 +687,6 @@ public interface IActivityManager extends IInterface {
      *
      * Cornerstone specific transactions
      */
-    int SET_CORNERSTONE_FOCUSED_APP_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+145;
+    int SET_CORNERSTONE_FOCUSED_APP_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+156;
 
 }

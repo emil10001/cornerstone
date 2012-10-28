@@ -20,6 +20,7 @@ import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 import com.android.internal.view.IInputMethodManager;
 import com.android.server.wm.WindowManagerService.H;
+import com.android.server.wm.WindowManagerService.WindowPanel;
 
 import android.content.ClipData;
 import android.content.Context;
