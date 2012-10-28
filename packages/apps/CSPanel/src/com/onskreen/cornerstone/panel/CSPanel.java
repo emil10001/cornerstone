@@ -194,7 +194,7 @@ public class CSPanel extends Activity {
             XmlResourceParser xpp = null;
             try {
                 Resources res = this.getResources();
-                xpp = res.getXml(com.android.internal.R.xml.cornerstone);
+                xpp = res.getXml(R.xml.cornerstone);
                 xpp.next();
                 int eventType = xpp.getEventType();
                 String tag;
