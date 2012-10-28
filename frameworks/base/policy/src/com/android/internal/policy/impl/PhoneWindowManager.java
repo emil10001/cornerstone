@@ -164,6 +164,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
@@ -632,8 +633,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      */
     ArrayList<WindowState> mWindowsShifted = new ArrayList<WindowState>();
     int mWindowShiftAmount;
-    final KeyCharacterMap.FallbackAction mFallbackAction = new KeyCharacterMap.FallbackAction();
-
+    /**
+     * Author: E John Feig
+     * Date: 28/10/2012
+     * Re: Onskreen
+     *
+     * Changed FallbackAction constructor call to factory method, per API change
+     */
+    final KeyCharacterMap.FallbackAction mFallbackAction = KeyCharacterMap.FallbackAction.obtain();
 
     private UEventObserver mHDMIObserver = new UEventObserver() {
         @Override
