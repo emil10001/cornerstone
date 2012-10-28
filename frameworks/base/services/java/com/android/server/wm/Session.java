@@ -20,7 +20,6 @@ import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 import com.android.internal.view.IInputMethodManager;
 import com.android.server.wm.WindowManagerService.H;
-import com.android.server.wm.WindowManagerService.WindowPanel;
 
 import android.content.ClipData;
 import android.content.Context;
@@ -158,7 +157,8 @@ final class Session extends IWindowSession.Stub
                 + Binder.getCallingPid());
         int res = mService.relayoutWindow(this, window, seq, attrs,
                 requestedWidth, requestedHeight, viewFlags, flags,
-                outFrame, outContentInsets, outVisibleInsets, outConfig, outSurface);
+                outFrame, outContentInsets, outVisibleInsets,
+                outConfig, outSurface);
         if (false) Slog.d(WindowManagerService.TAG, "<<<<<< EXITING relayout to "
                 + Binder.getCallingPid());
         return res;
@@ -399,7 +399,7 @@ final class Session extends IWindowSession.Stub
     *
     */
     public void handleFocusChange(IBinder token) {
-	  mService.handleFocusChangeLocked(token);
+          mService.handleFocusChangeLocked(token);
     }
 
     void windowAddedLocked() {

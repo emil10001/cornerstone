@@ -28,10 +28,26 @@ framework_res_source_path := APPS/framework-res_intermediates/src
 
 # the library
 # ============================================================
+#
+# These will be included in framework2 to avoid issues with the limit
+# on the number of classes/dex
+SECONDARY_FRAMEWORKS_SUBDIRS := \
+        core/java/android/test \
+        core/java/android/gesture \
+        core/java/android/speech/srec \
+        media/java/android/media/videoeditor \
+        media/java/android/media/audiofx \
+        media/mca/effect/java/android/media/effect \
+        media/mca/effect/java/android/media/effect/effects \
+        voip/java/com/android/server/sip
+
 include $(CLEAR_VARS)
 
 # FRAMEWORKS_BASE_SUBDIRS comes from build/core/pathmap.mk
 LOCAL_SRC_FILES := $(call find-other-java-files,$(FRAMEWORKS_BASE_SUBDIRS))
+SECONDARY_SRC_FILES := $(call find-other-java-files,$(SECONDARY_FRAMEWORKS_SUBDIRS))
+
+LOCAL_SRC_FILES := $(filter-out $(SECONDARY_SRC_FILES),$(LOCAL_SRC_FILES))
 
 # EventLogTags files.
 LOCAL_SRC_FILES += \
@@ -60,19 +76,19 @@ LOCAL_SRC_FILES := $(filter-out \
 ## READ ME: ########################################################
 LOCAL_SRC_FILES += \
 	core/java/android/accessibilityservice/IAccessibilityServiceConnection.aidl \
-	core/java/android/accessibilityservice/IEventListener.aidl \
+	core/java/android/accessibilityservice/IAccessibilityServiceClient.aidl \
 	core/java/android/accounts/IAccountManager.aidl \
 	core/java/android/accounts/IAccountManagerResponse.aidl \
 	core/java/android/accounts/IAccountAuthenticator.aidl \
 	core/java/android/accounts/IAccountAuthenticatorResponse.aidl \
 	core/java/android/app/IActivityController.aidl \
 	core/java/android/app/IActivityPendingResult.aidl \
-	core/java/android/app/IActivityWatcher.aidl \
 	core/java/android/app/IAlarmManager.aidl \
 	core/java/android/app/IBackupAgent.aidl \
-	core/java/android/app/ICornerstoneManager.aidl \
+        core/java/android/app/ICornerstoneManager.aidl \
 	core/java/android/app/IInstrumentationWatcher.aidl \
 	core/java/android/app/INotificationManager.aidl \
+	core/java/android/app/IProfileManager.aidl \
 	core/java/android/app/IProcessObserver.aidl \
 	core/java/android/app/ISearchManager.aidl \
 	core/java/android/app/ISearchManagerCallback.aidl \
@@ -110,6 +126,9 @@ LOCAL_SRC_FILES += \
 	core/java/android/content/pm/IPackageMoveObserver.aidl \
 	core/java/android/content/pm/IPackageStatsObserver.aidl \
 	core/java/android/database/IContentObserver.aidl \
+	core/java/android/hardware/ISerialManager.aidl \
+	core/java/android/hardware/input/IInputManager.aidl \
+	core/java/android/hardware/input/IInputDevicesChangedListener.aidl \
 	core/java/android/hardware/usb/IUsbManager.aidl \
 	core/java/android/net/IConnectivityManager.aidl \
 	core/java/android/net/INetworkManagementEventObserver.aidl \
@@ -117,17 +136,24 @@ LOCAL_SRC_FILES += \
 	core/java/android/net/INetworkPolicyListener.aidl \
 	core/java/android/net/INetworkPolicyManager.aidl \
 	core/java/android/net/INetworkStatsService.aidl \
+	core/java/android/net/INetworkStatsSession.aidl \
+	core/java/android/net/nsd/INsdManager.aidl \
 	core/java/android/nfc/INdefPushCallback.aidl \
 	core/java/android/nfc/INfcAdapter.aidl \
 	core/java/android/nfc/INfcAdapterExtras.aidl \
 	core/java/android/nfc/INfcTag.aidl \
+	core/java/android/os/ICancellationSignal.aidl \
 	core/java/android/os/IHardwareService.aidl \
 	core/java/android/os/IMessenger.aidl \
 	core/java/android/os/INetworkManagementService.aidl \
 	core/java/android/os/IPermissionController.aidl \
 	core/java/android/os/IPowerManager.aidl \
 	core/java/android/os/IRemoteCallback.aidl \
+	core/java/android/os/ISchedulingPolicyService.aidl \
+	core/java/android/os/IUpdateLock.aidl \
 	core/java/android/os/IVibratorService.aidl \
+	core/java/android/service/dreams/IDreamManager.aidl \
+	core/java/android/service/dreams/IDreamService.aidl \
 	core/java/android/service/wallpaper/IWallpaperConnection.aidl \
 	core/java/android/service/wallpaper/IWallpaperEngine.aidl \
 	core/java/android/service/wallpaper/IWallpaperService.aidl \
@@ -148,6 +174,7 @@ LOCAL_SRC_FILES += \
 	core/java/com/android/internal/app/IBatteryStats.aidl \
 	core/java/com/android/internal/app/IUsageStats.aidl \
 	core/java/com/android/internal/app/IMediaContainerService.aidl \
+	core/java/com/android/internal/app/IAssetRedirectionManager.aidl \
 	core/java/com/android/internal/appwidget/IAppWidgetService.aidl \
 	core/java/com/android/internal/appwidget/IAppWidgetHost.aidl \
 	core/java/com/android/internal/backup/IBackupTransport.aidl \
@@ -169,6 +196,7 @@ LOCAL_SRC_FILES += \
 	core/java/com/android/internal/view/IInputMethodClient.aidl \
 	core/java/com/android/internal/view/IInputMethodManager.aidl \
 	core/java/com/android/internal/view/IInputMethodSession.aidl \
+	core/java/com/android/internal/widget/ILockSettings.aidl \
 	core/java/com/android/internal/widget/IRemoteViewsFactory.aidl \
 	core/java/com/android/internal/widget/IRemoteViewsAdapterConnection.aidl \
 	keystore/java/android/security/IKeyChainAliasCallback.aidl \
@@ -184,10 +212,13 @@ LOCAL_SRC_FILES += \
 	location/java/android/location/INetInitiatedListener.aidl \
 	media/java/android/media/IAudioService.aidl \
 	media/java/android/media/IAudioFocusDispatcher.aidl \
+	media/java/android/media/IAudioRoutesObserver.aidl \
 	media/java/android/media/IMediaScannerListener.aidl \
 	media/java/android/media/IMediaScannerService.aidl \
 	media/java/android/media/IRemoteControlClient.aidl \
 	media/java/android/media/IRemoteControlDisplay.aidl \
+	media/java/android/media/IRemoteVolumeObserver.aidl \
+	media/java/android/media/IRingtonePlayer.aidl \
 	telephony/java/com/android/internal/telephony/IPhoneStateListener.aidl \
 	telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
 	telephony/java/com/android/internal/telephony/ITelephony.aidl \
@@ -240,6 +271,7 @@ $(full_classes_compiled_jar): $(framework_res_R_stamp)
 $(LOCAL_INSTALLED_MODULE): | $(dir $(LOCAL_INSTALLED_MODULE))framework-res.apk
 
 framework_built := $(call java-lib-deps,framework)
+framework_built += $(call java-lib-deps,framework2)
 
 # AIDL files to be preprocessed and included in the SDK,
 # relative to the root of the build tree.
@@ -250,6 +282,8 @@ aidl_files := \
 	frameworks/base/core/java/android/accounts/IAccountAuthenticator.aidl \
 	frameworks/base/core/java/android/accounts/IAccountAuthenticatorResponse.aidl \
 	frameworks/base/core/java/android/app/Notification.aidl \
+	frameworks/base/core/java/android/app/NotificationGroup.aidl \
+	frameworks/base/core/java/android/app/Profile.aidl \
 	frameworks/base/core/java/android/app/PendingIntent.aidl \
 	frameworks/base/core/java/android/bluetooth/BluetoothDevice.aidl \
 	frameworks/base/core/java/android/bluetooth/BluetoothHealthAppConfiguration.aidl \
@@ -321,10 +355,10 @@ fwbase_dirs_to_document := \
 	 )
 
 # include definition of libcore_to_document
-include $(LOCAL_PATH)/../../libcore/Docs.mk
+include libcore/Docs.mk
 
-# include definition of libfilterfw_to_document
-include $(LOCAL_PATH)/../../system/media/mca/Docs.mk
+# include definition of junit_to_document
+include external/junit/Common.mk
 
 non_base_dirs := \
 	../../external/apache-http/src/org/apache/http
@@ -349,7 +383,7 @@ html_dirs := \
 common_src_files := \
 	$(call find-other-html-files, $(html_dirs)) \
 	$(addprefix ../../libcore/, $(call libcore_to_document, $(LOCAL_PATH)/../../libcore)) \
-	$(addprefix ../../system/media/mca/, $(call libfilterfw_to_document, $(LOCAL_PATH)/../../system/media/mca)) \
+	$(addprefix ../../external/junit/, $(call junit_to_document, $(LOCAL_PATH)/../../external/junit))
 
 # These are relative to frameworks/base
 framework_docs_LOCAL_SRC_FILES := \
@@ -378,6 +412,7 @@ framework_docs_LOCAL_JAVA_LIBRARIES := \
 			core \
 			ext \
 			framework \
+			framework2 \
 
 framework_docs_LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 framework_docs_LOCAL_DROIDDOC_HTML_DIR := docs/html
@@ -399,6 +434,8 @@ framework_docs_LOCAL_DROIDDOC_OPTIONS := \
     -since ./frameworks/base/api/12.xml 12 \
     -since ./frameworks/base/api/13.xml 13 \
     -since ./frameworks/base/api/14.txt 14 \
+    -since ./frameworks/base/api/15.txt 15 \
+    -since ./frameworks/base/api/16.txt 16 \
 		-werror -hide 113 \
 		-overview $(LOCAL_PATH)/core/java/overview.html
 
@@ -443,12 +480,14 @@ web_docs_sample_code_flags := \
 		            resources/samples/HoneycombGallery "Honeycomb Gallery" \
 		-samplecode $(sample_dir)/JetBoy \
 		            resources/samples/JetBoy "JetBoy" \
+		-samplecode $(sample_dir)/KeyChainDemo \
+		            resources/samples/KeyChainDemo "KeyChain Demo" \
 		-samplecode $(sample_dir)/LunarLander \
 		            resources/samples/LunarLander "Lunar Lander" \
+		-samplecode $(sample_dir)/training/ads-and-ux \
+		            resources/samples/training/ads-and-ux "Mobile Advertisement Integration" \
 		-samplecode $(sample_dir)/MultiResolution \
 		            resources/samples/MultiResolution "Multiple Resolutions" \
-		-samplecode $(sample_dir)/NFCDemo \
-		            resources/samples/NFCDemo "NFC Demo" \
 		-samplecode $(sample_dir)/training/multiscreen/newsreader \
 		            resources/samples/newsreader "News Reader" \
 		-samplecode $(sample_dir)/NotePad \
@@ -500,11 +539,14 @@ web_docs_sample_code_flags := \
 		-samplecode $(sample_dir)/XmlAdapters \
 		            resources/samples/XmlAdapters "XML Adapters" \
 		-samplecode $(sample_dir)/TtsEngine \
-		            resources/samples/TtsEngine "Text To Speech Engine"
+		            resources/samples/TtsEngine "Text To Speech Engine" \
+		-samplecode $(sample_dir)/training/device-management-policy \
+		            resources/samples/training/device-management-policy "Device Management Policy"
+
 
 ## SDK version identifiers used in the published docs
   # major[.minor] version for current SDK. (full releases only)
-framework_docs_SDK_VERSION:=4.0
+framework_docs_SDK_VERSION:=4.1
   # release version (ie "Release x")  (full releases only)
 framework_docs_SDK_REL_ID:=1
 
@@ -645,7 +687,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:=$(framework_docs_LOCAL_SRC_FILES)
 LOCAL_INTERMEDIATE_SOURCES:=$(framework_docs_LOCAL_INTERMEDIATE_SOURCES)
-LOCAL_JAVA_LIBRARIES:=$(framework_docs_LOCAL_JAVA_LIBRARIES) framework
+LOCAL_JAVA_LIBRARIES:=$(framework_docs_LOCAL_JAVA_LIBRARIES) framework framework2
 LOCAL_MODULE_CLASS:=$(framework_docs_LOCAL_MODULE_CLASS)
 LOCAL_DROIDDOC_SOURCE_PATH:=$(framework_docs_LOCAL_DROIDDOC_SOURCE_PATH)
 LOCAL_DROIDDOC_HTML_DIR:=$(framework_docs_LOCAL_DROIDDOC_HTML_DIR)
@@ -698,6 +740,26 @@ LOCAL_DX_FLAGS := --core-library
 
 include $(BUILD_JAVA_LIBRARY)
 
+include $(CLEAR_VARS)
+
+# FRAMEWORKS_BASE_SUBDIRS comes from build/core/pathmap.mk
+LOCAL_SRC_FILES := $(call find-other-java-files,$(SECONDARY_FRAMEWORKS_SUBDIRS))
+
+LOCAL_NO_STANDARD_LIBRARIES := true
+LOCAL_JAVA_LIBRARIES := bouncycastle core core-junit ext framework
+
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE := framework2
+LOCAL_MODULE_CLASS := JAVA_LIBRARIES
+
+LOCAL_NO_EMMA_INSTRUMENT := true
+LOCAL_NO_EMMA_COMPILE := true
+
+#LOCAL_JARJAR_RULES := $(LOCAL_PATH)/jarjar-rules.txt
+
+LOCAL_DX_FLAGS := --core-library
+
+include $(BUILD_JAVA_LIBRARY)
 
 # Include subdirectory makefiles
 # ============================================================
@@ -707,3 +769,4 @@ include $(BUILD_JAVA_LIBRARY)
 ifeq (,$(ONE_SHOT_MAKEFILE))
 include $(call first-makefiles-under,$(LOCAL_PATH))
 endif
+

@@ -44,19 +44,26 @@ class DimAnimator {
      * Setting DimAnimator position variables
      */
     int mDimX = 0, mDimY = 0;
-
+    
     int mLastDimWidth, mLastDimHeight;
 
     DimAnimator (SurfaceSession session) {
         if (mDimSurface == null) {
-            if (WindowManagerService.SHOW_TRANSACTIONS ||
-                    WindowManagerService.SHOW_SURFACE_ALLOC) Slog.i(WindowManagerService.TAG,
-                            "  DIM " + mDimSurface + ": CREATE");
             try {
-                mDimSurface = new Surface(session, 0,
+                if (WindowManagerService.DEBUG_SURFACE_TRACE) {
+                    mDimSurface = new WindowStateAnimator.SurfaceTrace(session, 0,
                         "DimAnimator",
                         -1, 16, 16, PixelFormat.OPAQUE,
                         Surface.FX_SURFACE_DIM);
+                } else {
+                    mDimSurface = new Surface(session, 0,
+                        "DimAnimator",
+                        -1, 16, 16, PixelFormat.OPAQUE,
+                        Surface.FX_SURFACE_DIM);
+                }
+                if (WindowManagerService.SHOW_TRANSACTIONS ||
+                        WindowManagerService.SHOW_SURFACE_ALLOC) Slog.i(WindowManagerService.TAG,
+                                "  DIM " + mDimSurface + ": CREATE");
                 mDimSurface.setAlpha(0.0f);
             } catch (Exception e) {
                 Slog.e(WindowManagerService.TAG, "Exception creating Dim surface", e);
@@ -64,6 +71,14 @@ class DimAnimator {
         }
     }
 
+
+    /**
+     * Author: E. John Feig 
+     * Date: 27/10/2012
+     * 
+     * Re: Onskreen
+     * Method existed in ICS, but not in JB, restoring it.
+     */ 
     /**
      * Show the dim surface.
      */
@@ -75,17 +90,17 @@ class DimAnimator {
             try {
                 mLastDimWidth = dw;
                 mLastDimHeight = dh;
-				/**
-				 * Author: Onskreen
-				 * Date: 30/03/2011
-				 *
-				 * set the correct position based on the x,y set in
-				 * performLayoutAndPlaceSurfacesLockedInner method.
-				 * NOTE (4.8.2011): Dimming feature reverted for now until can
-				 * be resolved why causing issue on Viewsonic.
-				 */
-				mDimSurface.setPosition(mDimX, mDimY);
-				//mDimSurface.setPosition(0,0);
+                                /**
+                                 * Author: Onskreen
+                                 * Date: 30/03/2011
+                                 *
+                                 * set the correct position based on the x,y set in
+                                 * performLayoutAndPlaceSurfacesLockedInner method.
+                                 * NOTE (4.8.2011): Dimming feature reverted for now until can
+                                 * be resolved why causing issue on Viewsonic.
+                                 */
+                                mDimSurface.setPosition(mDimX, mDimY);
+                                //mDimSurface.setPosition(0,0);
                 mDimSurface.setSize(dw, dh);
                 mDimSurface.show();
             } catch (RuntimeException e) {
@@ -96,33 +111,62 @@ class DimAnimator {
             mLastDimHeight = dh;
             mDimSurface.setSize(dw, dh);
         } else {
-			mDimSurface.setPosition(mDimX, mDimY);
+                        mDimSurface.setPosition(mDimX, mDimY);
         }
     }
 
+
+
     /**
      * Set's the dim surface's layer and update dim parameters that will be used in
-     * {@link updateSurface} after all windows are examined.
+     * {@link #updateSurface} after all windows are examined.
      */
-    void updateParameters(Resources res, WindowState w, long currentTime) {
-        mDimSurface.setLayer(w.mAnimLayer - WindowManagerService.LAYER_OFFSET_DIM);
+    void updateParameters(final Resources res, final Parameters params, final long currentTime) {
+        // Multiply by 1.5 so that rotating a frozen surface that includes this does not expose a
+        // corner.
+        final int dw = (int) (params.mDimWidth * 1.5);
+        final int dh = (int) (params.mDimHeight * 1.5);
+        final WindowStateAnimator winAnimator = params.mDimWinAnimator;
+        final float target = params.mDimTarget;
+        if (!mDimShown) {
+            if (WindowManagerService.SHOW_TRANSACTIONS) Slog.i(WindowManagerService.TAG,
+                "  DIM " + mDimSurface + ": SHOW pos=(0,0) (" + dw + "x" + dh + ")");
+            mDimShown = true;
+            try {
+                mLastDimWidth = dw;
+                mLastDimHeight = dh;
+                // back off position so mDimXXX/4 is before and mDimXXX/4 is after
+                mDimSurface.setPosition(-1 * dw / 6, -1 * dh /6);
+                mDimSurface.setSize(dw, dh);
+                mDimSurface.show();
+            } catch (RuntimeException e) {
+                Slog.w(WindowManagerService.TAG, "Failure showing dim surface", e);
+            }
+        } else if (mLastDimWidth != dw || mLastDimHeight != dh) {
+            mLastDimWidth = dw;
+            mLastDimHeight = dh;
+            mDimSurface.setSize(dw, dh);
+            // back off position so mDimXXX/4 is before and mDimXXX/4 is after
+            mDimSurface.setPosition(-1 * dw / 6, -1 * dh /6);
+        }
 
-        final float target = w.mExiting ? 0 : w.mAttrs.dimAmount;
-        if (WindowManagerService.SHOW_TRANSACTIONS) Slog.i(WindowManagerService.TAG, "  DIM " + mDimSurface
-                + ": layer=" + (w.mAnimLayer-1) + " target=" + target);
+        mDimSurface.setLayer(winAnimator.mAnimLayer - WindowManagerService.LAYER_OFFSET_DIM);
+
+        if (WindowManagerService.SHOW_TRANSACTIONS) Slog.i(WindowManagerService.TAG, "  DIM "
+                + mDimSurface + ": layer=" + (winAnimator.mAnimLayer-1) + " target=" + target);
         if (mDimTargetAlpha != target) {
             // If the desired dim level has changed, then
             // start an animation to it.
             mLastDimAnimTime = currentTime;
-            long duration = (w.mAnimating && w.mAnimation != null)
-                    ? w.mAnimation.computeDurationHint()
+            long duration = (winAnimator.mAnimating && winAnimator.mAnimation != null)
+                    ? winAnimator.mAnimation.computeDurationHint()
                     : WindowManagerService.DEFAULT_DIM_DURATION;
             if (target > mDimTargetAlpha) {
                 TypedValue tv = new TypedValue();
                 res.getValue(com.android.internal.R.fraction.config_dimBehindFadeDuration,
                         tv, true);
                 if (tv.type == TypedValue.TYPE_FRACTION) {
-                    duration = (long)tv.getFraction((float)duration, (float)duration);
+                    duration = (long)tv.getFraction(duration, duration);
                 } else if (tv.type >= TypedValue.TYPE_FIRST_INT
                         && tv.type <= TypedValue.TYPE_LAST_INT) {
                     duration = tv.data;
@@ -150,33 +194,31 @@ class DimAnimator {
             }
         }
 
-        boolean animating = false;
-        if (mLastDimAnimTime != 0) {
+        boolean animating = mLastDimAnimTime != 0;
+        if (animating) {
             mDimCurrentAlpha += mDimDeltaPerMs
                     * (currentTime-mLastDimAnimTime);
-            boolean more = true;
             if (displayFrozen) {
                 // If the display is frozen, there is no reason to animate.
-                more = false;
+                animating = false;
             } else if (mDimDeltaPerMs > 0) {
                 if (mDimCurrentAlpha > mDimTargetAlpha) {
-                    more = false;
+                    animating = false;
                 }
             } else if (mDimDeltaPerMs < 0) {
                 if (mDimCurrentAlpha < mDimTargetAlpha) {
-                    more = false;
+                    animating = false;
                 }
             } else {
-                more = false;
+                animating = false;
             }
 
             // Do we need to continue animating?
-            if (more) {
+            if (animating) {
                 if (WindowManagerService.SHOW_TRANSACTIONS) Slog.i(WindowManagerService.TAG, "  DIM "
                         + mDimSurface + ": alpha=" + mDimCurrentAlpha);
                 mLastDimAnimTime = currentTime;
                 mDimSurface.setAlpha(mDimCurrentAlpha);
-                animating = true;
             } else {
                 mDimCurrentAlpha = mDimTargetAlpha;
                 mLastDimAnimTime = 0;
@@ -200,12 +242,28 @@ class DimAnimator {
 
     public void printTo(String prefix, PrintWriter pw) {
         pw.print(prefix);
-        pw.print("mDimSurface="); pw.println(mDimSurface);
+        pw.print("mDimSurface="); pw.print(mDimSurface);
+                pw.print(" "); pw.print(mLastDimWidth); pw.print(" x ");
+                pw.println(mLastDimHeight);
         pw.print(prefix);
         pw.print("mDimShown="); pw.print(mDimShown);
         pw.print(" current="); pw.print(mDimCurrentAlpha);
         pw.print(" target="); pw.print(mDimTargetAlpha);
         pw.print(" delta="); pw.print(mDimDeltaPerMs);
         pw.print(" lastAnimTime="); pw.println(mLastDimAnimTime);
+    }
+
+    static class Parameters {
+        final WindowStateAnimator mDimWinAnimator;
+        final int mDimWidth;
+        final int mDimHeight;
+        final float mDimTarget;
+        Parameters(final WindowStateAnimator dimWinAnimator, final int dimWidth,
+                final int dimHeight, final float dimTarget) {
+            mDimWinAnimator = dimWinAnimator;
+            mDimWidth = dimWidth;
+            mDimHeight = dimHeight;
+            mDimTarget = dimTarget;
+        }
     }
 }

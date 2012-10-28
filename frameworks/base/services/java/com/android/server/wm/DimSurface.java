@@ -40,14 +40,21 @@ class DimSurface {
 
     DimSurface(SurfaceSession session) {
         if (mDimSurface == null) {
-            if (WindowManagerService.SHOW_TRANSACTIONS ||
-                    WindowManagerService.SHOW_SURFACE_ALLOC) Slog.i(WindowManagerService.TAG,
-                            "  DIM " + mDimSurface + ": CREATE");
             try {
-                mDimSurface = new Surface(session, 0,
+                if (WindowManagerService.DEBUG_SURFACE_TRACE) {
+                    mDimSurface = new WindowStateAnimator.SurfaceTrace(session, 0,
                         "DimSurface",
                         -1, 16, 16, PixelFormat.OPAQUE,
                         Surface.FX_SURFACE_DIM);
+                } else {
+                    mDimSurface = new Surface(session, 0,
+                        "DimSurface",
+                        -1, 16, 16, PixelFormat.OPAQUE,
+                        Surface.FX_SURFACE_DIM);
+                }
+                if (WindowManagerService.SHOW_TRANSACTIONS ||
+                        WindowManagerService.SHOW_SURFACE_ALLOC) Slog.i(WindowManagerService.TAG,
+                                "  DIM " + mDimSurface + ": CREATE");
                 mDimSurface.setAlpha(0.0f);
             } catch (Exception e) {
                 Slog.e(WindowManagerService.TAG, "Exception creating Dim surface", e);
@@ -66,15 +73,16 @@ class DimSurface {
             try {
                 mLastDimWidth = dw;
                 mLastDimHeight = dh;
-				/**
-				 * Author: Onskreen
-				 * Date: 21/12/2011
-				 *
-				 * set the correct position based on the x,y set in
-				 * performLayoutAndPlaceSurfacesLockedInner method.
-				 */
+                                /**
+                                 * Author: Onskreen
+                                 * Date: 21/12/2011
+                                 *
+                                 * set the correct position based on the x,y set in
+                                 * performLayoutAndPlaceSurfacesLockedInner method.
+                                 */
                 //mDimSurface.setPosition(0, 0);
                 mDimSurface.setPosition(mDimX, mDimY);
+
                 mDimSurface.setSize(dw, dh);
                 mDimSurface.setLayer(layer);
                 mDimSurface.show();
@@ -93,8 +101,8 @@ class DimSurface {
             mDimSurface.setLayer(layer);
             mDimSurface.setAlpha(((color>>24)&0xff)/255.0f);
         } else {
-			mDimSurface.setPosition(mDimX, mDimY);
-        }
+                        mDimSurface.setPosition(mDimX, mDimY);
+	}
     }
 
     void hide() {
