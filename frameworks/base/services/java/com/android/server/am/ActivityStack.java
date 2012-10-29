@@ -835,45 +835,6 @@ final class ActivityStack {
                       + ", giving up", e);
                 mService.appDiedLocked(app, app.pid, app.thread);
                 requestFinishActivityLocked(r.appToken, Activity.RESULT_CANCELED, null,
-olean lastActivity = true;
-        for (int i=mHistory.size()-1; i>=0; i--) {
-            ActivityRecord p = mHistory.get(i);
-            if (!p.finishing && p != r) {
-                lastActivity = false;
-                break;
-            }
-        }
-
-         // If this is the last activity, but it is the home activity, then
-        // just don't finish it.
-        if (lastActivity) {
-            /**
-             * Author: Onskreen
-             * Date: 04/02/2011
-             *
-             * In the case of the cornerstone panel, the back key should not be able to finish the last
-             * activity in the last task or there would be no activities visible behind it.
-             */
-                        if(!mMainStack && !mService.mActivityStackExiting) {
-                                return false;
-                        } else {
-                                /**
-                * Author: Onskreen
-                * Date: 29/12/2011
-                *
-                * Identifies the HOME app by checking the category
-                * as well as matching the AMS.mHomeProcess. Any HOME
-                * app must pass this test else it's not considered as
-                * HOME app and should be killed immediately as requested
-                * by the framework.
-                */
-               if (r.intent.hasCategory(Intent.CATEGORY_HOME)
-                       && r.app != mService.mHomeProcess) {
-                                        return false;
-               }
-                        }
-        }
-
                         "2nd-crash");
                 return false;
             }
@@ -883,7 +844,6 @@ olean lastActivity = true;
             app.activities.remove(r);
             throw e;
         }
-
         r.launchFailed = false;
         if (updateLRUListLocked(r)) {
             Slog.w(TAG, "Activity " + r
@@ -4641,7 +4601,7 @@ olean lastActivity = true;
             }
             return finished;
 //            return finishCurrentActivityLocked(r, index,
-                    FINISH_AFTER_PAUSE) == null;
+                    //FINISH_AFTER_PAUSE) == null;
         } else {
             if (DEBUG_PAUSE) Slog.v(TAG, "Finish waiting for pause of: " + r);
         }
