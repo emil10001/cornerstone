@@ -7216,11 +7216,8 @@ public class WindowManagerService extends IWindowManager.Stub
         rawss.recycle();
         //return bm;
 
-
-    }
-
-    /**
-     * Freeze rotation changes.  (Enable "rotation lock".)uthor: Onskreen
+        /**
+         * Author: Onskreen
          * Date: 24/12/2011
          *
          * Crop and rescale the bmp to capture just the application panel
@@ -7272,6 +7269,9 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
+
+    /**
+     * Freeze rotation changes.  (Enable "rotation lock".)
      * Persists across reboots.
      * @param rotation The desired rotation to freeze to, or -1 to use the
      * current rotation.
@@ -12184,8 +12184,7 @@ public class WindowManagerService extends IWindowManager.Stub
         boolean wallpaperDestroyed = false;
         i = mDestroySurface.size();
         if (i > 0) {
-            do {
-                i--;
+            for (; i>0;i--) {
                 WindowState win = mDestroySurface.get(i);
                 win.mDestroying = false;
 
@@ -12335,6 +12334,9 @@ public class WindowManagerService extends IWindowManager.Stub
                 win.mWinAnimator.destroySurfaceLocked();
             } while (i > 0);
             mDestroySurface.clear();*/
+        		}
+                } 
+            mResizingWindows.clear();
         }
 
         // Time to remove any exiting tokens?
