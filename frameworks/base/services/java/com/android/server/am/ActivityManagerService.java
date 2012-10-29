@@ -9978,7 +9978,6 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                 }
             }
-        }
 
                         /**
                          * Author: Onskreen
@@ -10013,9 +10012,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     }
                 }
             }
-
-        }
-
+       }
 
         // Bump up the crash count of any services currently running in the proc.
         if (app.services.size() != 0) {
