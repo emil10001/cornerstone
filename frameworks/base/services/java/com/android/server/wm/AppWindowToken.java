@@ -98,6 +98,9 @@ class AppWindowToken extends WindowToken {
     // Input application handle used by the input dispatcher.
     final InputApplicationHandle mInputApplicationHandle;
 
+    boolean animating;
+    Animation animation;
+
     /**
      * Author: Onskreen
      * Date: 11/02/2010
@@ -105,6 +108,7 @@ class AppWindowToken extends WindowToken {
      * Flag indiciating if token is the cornerstone.
      */
     boolean isCornerstone;
+    final WindowManagerService mService;
 
     AppWindowToken(WindowManagerService _service, IApplicationToken _token) {
         super(_service, _token.asBinder(),
@@ -116,6 +120,26 @@ class AppWindowToken extends WindowToken {
         mAppAnimator = new AppWindowAnimator(_service, this);
     }
 
+    public void setAnimation(Animation anim) {
+        if (WindowManagerService.localLOGV) Slog.v(
+            WindowManagerService.TAG, "Setting animation in " + this + ": " + anim);
+        animation = anim;
+        animating = false;
+        anim.restrictDuration(WindowManagerService.MAX_ANIMATION_DURATION);
+        anim.scaleCurrentDuration(service.mTransitionAnimationScale);
+        int zorder = anim.getZAdjustment();
+        int adj = 0;
+        if (zorder == Animation.ZORDER_TOP) {
+            adj = WindowManagerService.TYPE_LAYER_OFFSET;
+        } else if (zorder == Animation.ZORDER_BOTTOM) {
+            adj = -WindowManagerService.TYPE_LAYER_OFFSET;
+        }
+
+        if (animLayerAdjustment != adj) {
+            animLayerAdjustment = adj;
+            updateLayers();
+        }
+    }
 
     /**
      * Author: Onskreen

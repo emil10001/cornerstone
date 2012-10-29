@@ -32,6 +32,10 @@ import static android.view.WindowManager.LayoutParams.TYPE_DREAM;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 
 import com.android.internal.app.IBatteryStats;
 import com.android.internal.app.ThemeUtils;
@@ -153,6 +157,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+
+import android.view.animation.TranslateAnimation;
+import java.util.Locale;
+import android.util.LocaleUtil;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 /** {@hide} */
 public class WindowManagerService extends IWindowManager.Stub
@@ -9465,7 +9477,7 @@ public class WindowManagerService extends IWindowManager.Stub
         return false;
     }
 
-    private WindowState getFocusedWindow() {
+    WindowState getFocusedWindow() {
         synchronized (mWindowMap) {
             return getFocusedWindowLocked();
         }
@@ -12139,7 +12151,7 @@ public class WindowManagerService extends IWindowManager.Stub
                                         }
                                     } else {
                                         if(DEBUG_WP_CONFIG) {
-                                            Slog.v(TAG, "Resetting mCurConfiguration because orientation changed " + w);
+                                            Slog.v(TAG, "Resetting mCurConfiguration because orientation changed " + win);
                                         }
                                     }
                                 }

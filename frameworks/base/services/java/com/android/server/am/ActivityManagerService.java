@@ -44,6 +44,7 @@ import android.app.AppGlobals;
 import android.app.ApplicationErrorReport;
 import android.app.Dialog;
 import android.app.IActivityController;
+import android.app.IActivityManager;
 import android.app.IApplicationThread;
 import android.app.IInstrumentationWatcher;
 import android.app.INotificationManager;
@@ -163,6 +164,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import dalvik.system.Zygote;
 
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+
 public final class ActivityManagerService extends ActivityManagerNative
         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {
     private static final String USER_DATA_DIR = "/data/user/";
@@ -194,6 +201,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     static final boolean DEBUG_MU = localLOGV || false;
     static final boolean VALIDATE_TOKENS = false;
     static final boolean SHOW_ACTIVITY_START_TIME = true;
+    static final boolean DEBUG_CORNERSTONE = localLOGV || false;
     
     // Control over CPU and battery monitoring.
     static final long BATTERY_STATS_TIME = 30*60*1000;      // write battery stats every 30 minutes.
@@ -358,6 +366,10 @@ public final class ActivityManagerService extends ActivityManagerNative
         ActivityRecord r;
         ActivityRecord sourceRecord;
         int startFlags;
+
+        Uri[] grantedUriPermissions;
+        int grantedMode;
+        boolean onlyIfNeeded;
     }
     
     final ArrayList<PendingActivityLaunch> mPendingActivityLaunches
@@ -4528,7 +4540,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                          *
                          * Replicating logic for cornerstone stack
                          */
-            for (i=mCornerstoneStack.mHistory.size()-1; i>=0; i--) {
+            for (int i=mCornerstoneStack.mHistory.size()-1; i>=0; i--) {
                 ActivityRecord r = (ActivityRecord)mCornerstoneStack.mHistory.get(i);
                 if ((r.info.flags&ActivityInfo.FLAG_FINISH_ON_CLOSE_SYSTEM_DIALOGS) != 0) {
                     r.stack.finishActivityLocked(r, i,
@@ -7557,8 +7569,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                         panelIndex >= 0) {
                                         ActivityStack targetStack = mCornerstonePanelStacks.get(panelIndex);
                                         if(targetStack != null){
-                                                targetStack.startActivityLocked(null, intent, null, null, 0, aInfo,
-                                                        null, null, 0, 0, 0, false, false, null);
+                                                targetStack.startActivityLocked(null, intent, null, null, 0, aInfo, null, null, 0, 0, 0, false, false, null);
 
                                                 /**
                                                  * Author: Onskreen
@@ -7582,8 +7593,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                  * apps in cornerstone panels.
                                  */
                 } else if(MAIN_STACK == panelIndex) {
-                    mMainStack.startActivityLocked(null, intent, null, null, 0, aInfo,
-                                null, null, 0, 0, 0, false, false, null);
+                    mMainStack.startActivityLocked(null, intent, null, null, 0, aInfo, null, null, 0, 0, 0, false, false, null);
                     mWindowManager.handleFocusChange(mMainStack.topRunningActivityLocked(null).appToken.asBinder());
                                 } else {
                                         if(DEBUG_CORNERSTONE) {
@@ -7791,7 +7801,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                  *
                  * Choosing between stacks
                  */
-        int stack = getActivityStack(task);
+        int stack = getActivityStack(token);
         ActivityStack targetStack = null;
         //Cornerstone Panel
         if(stack >= 0) {
@@ -15782,8 +15792,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             Intent intent = new Intent(Intent.ACTION_CONFIGURATION_CHANGED);
             intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
                     | Intent.FLAG_RECEIVER_REPLACE_PENDING);
-            broadcastIntentLocked(null, null, intent, null, null, 0, null, null,
-                    null, false, false, MY_PID, Process.SYSTEM_UID);
+            broadcastIntentLocked(null, null, intent, null, null, 0, null, null, null, false, false, MY_PID, Process.SYSTEM_UID);
 
                         /**
                          * Author: Onskreen
@@ -15883,8 +15892,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 }
                                 Configuration wpConfig = mWindowManager.computeWindowPanelConfiguration(panel);
                                 mWindowManager.updateNonWindowPanelConfigurationFrom(wpConfig, mConfiguration);
-                if (DEBUG_CONFIGURATION) Slog.v(TAG, "Sending to proc "
-                        + app.processName + " new config " + wpConfig);
+                if (DEBUG_CONFIGURATION) Slog.v(TAG, "Sending to proc " + app.processName + " new config " + wpConfig);
                                 app.thread.scheduleConfigurationChanged(wpConfig);
             }
         } catch (Exception e) {
@@ -15893,8 +15901,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         Intent intent = new Intent(Intent.ACTION_CONFIGURATION_CHANGED);
         intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
                 | Intent.FLAG_RECEIVER_REPLACE_PENDING);
-        broadcastIntentLocked(null, null, intent, null, null, 0, null, null,
-                null, false, false, MY_PID, Process.SYSTEM_UID);
+        broadcastIntentLocked(null, null, intent, null, null, 0, null, null, null, false, false, MY_PID, Process.SYSTEM_UID);
 
         ActivityRecord starting = stack.topRunningActivityLocked(null);
         if (starting != null) {
@@ -17304,7 +17311,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         return success;
     }
 
-    private final ActivityRecord resumedAppLocked() {
+/*    private final ActivityRecord resumedAppLocked() {
         ActivityRecord resumedActivity = mMainStack.mResumedActivity;
         if (resumedActivity == null || resumedActivity.app == null) {
             resumedActivity = mMainStack.mPausingActivity;
@@ -17313,7 +17320,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         }
         return resumedActivity;
-    }
+    }*/
 
     private final boolean updateOomAdjLocked(ProcessRecord app) {
         final ActivityRecord TOP_ACT = resumedAppLocked();

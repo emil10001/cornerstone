@@ -108,6 +108,9 @@ final class WindowState implements WindowManagerPolicy.WindowState {
     boolean mObscured;
     boolean mTurnOnScreen;
 
+    Surface mSurface;
+    Surface mPendingDestroySurface;
+
     int mLayoutSeq = -1;
 
     Configuration mConfiguration = null;
@@ -118,6 +121,18 @@ final class WindowState implements WindowManagerPolicy.WindowState {
      * applied).
      */
     final RectF mShownFrame = new RectF();
+
+    /**
+     * Set when we have changed the size of the surface, to know that
+     * we must tell them application to resize (and thus redraw itself).
+     */
+    boolean mSurfaceResized;
+
+    /**
+     * Set if the client has asked that the destroy of its surface be delayed
+     * until it explicitly says it is okay.
+     */
+    boolean mSurfaceDestroyDeferred;
 
     /**
      * Insets that determine the actually visible area.  These are in the application's
@@ -166,6 +181,10 @@ final class WindowState implements WindowManagerPolicy.WindowState {
      * tests.
      */
     int mTouchableInsets = ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_FRAME;
+
+    // This is set after the Surface has been created but before the
+    // window has been drawn.  During this time the surface is hidden.
+    boolean mDrawPending;
 
     /**
      * This is rectangle of the window's surface that is not covered by
@@ -241,6 +260,12 @@ final class WindowState implements WindowManagerPolicy.WindowState {
     // Temp for keeping track of windows that have been removed when
     // rebuilding window list.
     boolean mRebuilding;
+
+    // For debugging, this is the last information given to the surface flinger.
+    boolean mSurfaceShown;
+    float mSurfaceX, mSurfaceY, mSurfaceW, mSurfaceH;
+    int mSurfaceLayer;
+    float mSurfaceAlpha;
 
     // Input channel and input window handle used by the input dispatcher.
     final InputWindowHandle mInputWindowHandle;
@@ -1018,6 +1043,201 @@ final class WindowState implements WindowManagerPolicy.WindowState {
             // we are doing this as part of processing a death note.)
         }
     }
+
+    void destroySurfaceLocked() {
+        if (mAppToken != null && this == mAppToken.startingWindow) {
+            mAppToken.startingDisplayed = false;
+        }
+
+        if (mSurface != null) {
+            mDrawPending = false;
+            mCommitDrawPending = false;
+            mReadyToShow = false;
+
+            int i = mChildWindows.size();
+            while (i > 0) {
+                i--;
+                WindowState c = mChildWindows.get(i);
+                c.mAttachedHidden = true;
+            }
+
+            if (mReportDestroySurface) {
+                mReportDestroySurface = false;
+                mSurfacePendingDestroy = true;
+                try {
+                    mClient.dispatchGetNewSurface();
+                    // We'll really destroy on the next time around.
+                    return;
+                } catch (RemoteException e) {
+                }
+            }
+
+            try {
+                if (DEBUG_VISIBILITY) {
+                    RuntimeException e = null;
+                    if (!WindowManagerService.HIDE_STACK_CRAWLS) {
+                        e = new RuntimeException();
+                        e.fillInStackTrace();
+                    }
+                    Slog.w(WindowManagerService.TAG, "Window " + this + " destroying surface "
+                            + mSurface + ", session " + mSession, e);
+                }
+                if (mSurfaceDestroyDeferred) {
+                    if (mSurface != null && mPendingDestroySurface != mSurface) {
+                        if (mPendingDestroySurface != null) {
+                            if (SHOW_TRANSACTIONS || SHOW_SURFACE_ALLOC) {
+                                RuntimeException e = null;
+                                if (!WindowManagerService.HIDE_STACK_CRAWLS) {
+                                    e = new RuntimeException();
+                                    e.fillInStackTrace();
+                                }
+                                WindowManagerService.logSurface(this, "DESTROY PENDING", e);
+                            }
+                            mPendingDestroySurface.destroy();
+                        }
+                        mPendingDestroySurface = mSurface;
+                    }
+                } else {
+                    if (SHOW_TRANSACTIONS || SHOW_SURFACE_ALLOC) {
+                        RuntimeException e = null;
+                        if (!WindowManagerService.HIDE_STACK_CRAWLS) {
+                            e = new RuntimeException();
+                            e.fillInStackTrace();
+                        }
+                        WindowManagerService.logSurface(this, "DESTROY", e);
+                    }
+                    mSurface.destroy();
+                }
+            } catch (RuntimeException e) {
+                Slog.w(WindowManagerService.TAG, "Exception thrown when destroying Window " + this
+                    + " surface " + mSurface + " session " + mSession
+                    + ": " + e.toString());
+            }
+
+            mSurfaceShown = false;
+            mSurface = null;
+        }
+    }
+
+
+    Surface createSurfaceLocked() {
+        if (mSurface == null) {
+            mReportDestroySurface = false;
+            mSurfacePendingDestroy = false;
+            if (WindowManagerService.DEBUG_ORIENTATION) Slog.i(WindowManagerService.TAG,
+                    "createSurface " + this + ": DRAW NOW PENDING");
+            mDrawPending = true;
+            mCommitDrawPending = false;
+            mReadyToShow = false;
+            if (mAppToken != null) {
+                mAppToken.allDrawn = false;
+            }
+
+            mService.makeWindowFreezingScreenIfNeededLocked(this);
+
+            int flags = 0;
+
+            if ((mAttrs.flags&WindowManager.LayoutParams.FLAG_SECURE) != 0) {
+                flags |= Surface.SECURE;
+            }
+            if (DEBUG_VISIBILITY) Slog.v(
+                WindowManagerService.TAG, "Creating surface in session "
+                + mSession.mSurfaceSession + " window " + this
+                + " w=" + mCompatFrame.width()
+                + " h=" + mCompatFrame.height() + " format="
+                + mAttrs.format + " flags=" + flags);
+
+            int w = mCompatFrame.width();
+            int h = mCompatFrame.height();
+            if ((mAttrs.flags & LayoutParams.FLAG_SCALED) != 0) {
+                // for a scaled surface, we always want the requested
+                // size.
+                w = mRequestedWidth;
+                h = mRequestedHeight;
+            }
+
+            // Something is wrong and SurfaceFlinger will not like this,
+            // try to revert to sane values
+            if (w <= 0) w = 1;
+            if (h <= 0) h = 1;
+
+            mSurfaceShown = false;
+            mSurfaceLayer = 0;
+            mSurfaceAlpha = 1;
+            mSurfaceX = 0;
+            mSurfaceY = 0;
+            mSurfaceW = w;
+            mSurfaceH = h;
+            try {
+                final boolean isHwAccelerated = (mAttrs.flags &
+                        WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED) != 0;
+                final int format = isHwAccelerated ? PixelFormat.TRANSLUCENT : mAttrs.format;
+                if (!PixelFormat.formatHasAlpha(mAttrs.format)) {
+                    flags |= Surface.OPAQUE;
+                }
+                mSurface = new Surface(
+                        mSession.mSurfaceSession, mSession.mPid,
+                        mAttrs.getTitle().toString(),
+                        0, w, h, format, flags);
+                if (SHOW_TRANSACTIONS || SHOW_SURFACE_ALLOC) Slog.i(WindowManagerService.TAG,
+                        "  CREATE SURFACE "
+                        + mSurface + " IN SESSION "
+                        + mSession.mSurfaceSession
+                        + ": pid=" + mSession.mPid + " format="
+                        + mAttrs.format + " flags=0x"
+                        + Integer.toHexString(flags)
+                        + " / " + this);
+            } catch (Surface.OutOfResourcesException e) {
+                Slog.w(WindowManagerService.TAG, "OutOfResourcesException creating surface");
+                mService.reclaimSomeSurfaceMemoryLocked(this, "create", true);
+                return null;
+            } catch (Exception e) {
+                Slog.e(WindowManagerService.TAG, "Exception creating surface", e);
+                return null;
+            }
+
+            if (WindowManagerService.localLOGV) Slog.v(
+                WindowManagerService.TAG, "Got surface: " + mSurface
+                + ", set left=" + mFrame.left + " top=" + mFrame.top
+                + ", animLayer=" + mAnimLayer);
+            if (SHOW_LIGHT_TRANSACTIONS) {
+                Slog.i(WindowManagerService.TAG, ">>> OPEN TRANSACTION createSurfaceLocked");
+                WindowManagerService.logSurface(this, "CREATE pos=(" + mFrame.left
+                        + "," + mFrame.top + ") (" +
+                        mCompatFrame.width() + "x" + mCompatFrame.height() + "), layer=" +
+                        mAnimLayer + " HIDE", null);
+            }
+            Surface.openTransaction();
+            try {
+                try {
+                    mSurfaceX = mFrame.left + mXOffset;
+                    mSurfaceY = mFrame.top + mYOffset;
+                    mSurface.setPosition(mSurfaceX, mSurfaceY);
+                    mSurfaceLayer = mAnimLayer;
+                    mSurface.setLayer(mAnimLayer);
+                    mSurfaceShown = false;
+                    mSurface.hide();
+                    if ((mAttrs.flags&WindowManager.LayoutParams.FLAG_DITHER) != 0) {
+                        if (SHOW_TRANSACTIONS) WindowManagerService.logSurface(this, "DITHER", null);
+                        mSurface.setFlags(Surface.SURFACE_DITHER,
+                                Surface.SURFACE_DITHER);
+                    }
+                } catch (RuntimeException e) {
+                    Slog.w(WindowManagerService.TAG, "Error creating surface in " + w, e);
+                    mService.reclaimSomeSurfaceMemoryLocked(this, "create-init", true);
+                }
+                mLastHidden = true;
+            } finally {
+                Surface.closeTransaction();
+                if (SHOW_LIGHT_TRANSACTIONS) Slog.i(WindowManagerService.TAG,
+                        "<<< CLOSE TRANSACTION createSurfaceLocked");
+            }
+            if (WindowManagerService.localLOGV) Slog.v(
+                    WindowManagerService.TAG, "Created surface " + this);
+        }
+        return mSurface;
+    }
+
 
     void setInputChannel(InputChannel inputChannel) {
         if (mInputChannel != null) {

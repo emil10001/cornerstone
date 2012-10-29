@@ -23,6 +23,19 @@ import com.android.internal.app.HeavyWeightSwitcherActivity;
 import com.android.internal.os.BatteryStatsImpl;
 import com.android.server.PowerManagerService;
 import com.android.server.am.ActivityManagerService.PendingActivityLaunch;
+import com.android.server.wm.WindowManagerService.WP_PANEL;
+import com.android.server.wm.WindowManagerService;
+import com.android.server.wm.WindowManagerService.Cornerstone_State;
+
+import static android.app.IActivityManager.START_CLASS_NOT_FOUND;
+import static android.app.IActivityManager.START_DELIVERED_TO_TOP;
+import static android.app.IActivityManager.START_FORWARD_AND_REQUEST_CONFLICT;
+import static android.app.IActivityManager.START_INTENT_NOT_RESOLVED;
+import static android.app.IActivityManager.START_PERMISSION_DENIED;
+import static android.app.IActivityManager.START_RETURN_INTENT_TO_CALLER;
+import static android.app.IActivityManager.START_SUCCESS;
+import static android.app.IActivityManager.START_SWITCHES_CANCELED;
+import static android.app.IActivityManager.START_TASK_TO_FRONT;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -465,7 +478,15 @@ final class ActivityStack {
             }
         }
     };
-    
+
+    ActivityStack(ActivityManagerService service, Context context){
+	return new ActivityStack(service, context,true,false,-1);
+    }   
+ 
+    ActivityStack(ActivityManagerService service, Context context, boolean mainStack){
+	return new ActivityStack(service, context,mainStack,false,-1);
+    }   
+ 
     ActivityStack(ActivityManagerService service, Context context, boolean mainStack, boolean cornerstonePanelStack, int cornerstonePanelIndex) {
         mService = service;
         mContext = context;
@@ -1252,7 +1273,7 @@ final class ActivityStack {
 
 
 
-    private final void startPausingLocked(boolean userLeaving, boolean uiSleeping) {
+/*    private final void startPausingLocked(boolean userLeaving, boolean uiSleeping) {
         if (mPausingActivity != null) {
             RuntimeException e = new RuntimeException();
             Slog.e(TAG, "Trying to pause when pause is already pending for "
@@ -1335,7 +1356,7 @@ final class ActivityStack {
             if (DEBUG_PAUSE) Slog.v(TAG, "Activity not running, resuming next.");
             resumeTopActivityLocked(null);
         }
-    }
+    }*/
     
     final void activityPaused(IBinder token, boolean timeout) {
         if (DEBUG_PAUSE) Slog.v(
@@ -1771,7 +1792,7 @@ final class ActivityStack {
             // There are no more activities!  Let's just start up the
             // Launcher...
             if (mMainStack) {
-                return mService.startHomeActivityLocked();
+                return mService.startHomeActivityLocked(0);
             /**
              * Author: Onskreen
              * Date: 16/07/2011
@@ -1927,7 +1948,7 @@ final class ActivityStack {
         // considered stopped.
         try {
             AppGlobals.getPackageManager().setPackageStoppedState(
-                    next.packageName, false);
+                    next.packageName, false,0);
         } catch (RemoteException e1) {
         } catch (IllegalArgumentException e) {
             Slog.w(TAG, "Failed trying to unstop package "
