@@ -16,6 +16,7 @@
 
 package com.android.server.wm;
 
+import static android.view.WindowManager.LayoutParams;
 import static android.view.WindowManager.LayoutParams.FIRST_SUB_WINDOW;
 import static android.view.WindowManager.LayoutParams.FLAG_COMPATIBLE_WINDOW;
 import static android.view.WindowManager.LayoutParams.LAST_SUB_WINDOW;
@@ -96,6 +97,19 @@ final class WindowState implements WindowManagerPolicy.WindowState {
     boolean mAppFreezing;
     boolean mAttachedHidden;    // is our parent window hidden?
     boolean mWallpaperVisible;  // for wallpaper, what was last vis report?
+
+    /**
+     * Author: E John Feig
+     * Re: Onskreen
+     *
+     * missing variables
+     */
+    boolean mCommitDrawPending = false;
+    boolean mReadyToShow = false;
+    boolean mReportDestroySurface = false;
+    boolean mSurfacePendingDestroy = false;
+    boolean mLastHidden = false;
+    int mAnimLayer;
 
     /**
      * The window size that was requested by the application.  These are in
@@ -1192,7 +1206,7 @@ final class WindowState implements WindowManagerPolicy.WindowState {
                         + " / " + this);
             } catch (Surface.OutOfResourcesException e) {
                 Slog.w(WindowManagerService.TAG, "OutOfResourcesException creating surface");
-                mService.reclaimSomeSurfaceMemoryLocked(this, "create", true);
+                mService.reclaimSomeSurfaceMemoryLocked(mWinAnimator, "create", true);
                 return null;
             } catch (Exception e) {
                 Slog.e(WindowManagerService.TAG, "Exception creating surface", e);
@@ -1227,7 +1241,7 @@ final class WindowState implements WindowManagerPolicy.WindowState {
                     }
                 } catch (RuntimeException e) {
                     Slog.w(WindowManagerService.TAG, "Error creating surface in " + w, e);
-                    mService.reclaimSomeSurfaceMemoryLocked(this, "create-init", true);
+                    mService.reclaimSomeSurfaceMemoryLocked(mWinAnimator, "create-init", true);
                 }
                 mLastHidden = true;
             } finally {

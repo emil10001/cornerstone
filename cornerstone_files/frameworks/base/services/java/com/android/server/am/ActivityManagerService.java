@@ -2591,8 +2591,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 targetStack = mMainStack;
                         }
                         targetStack.startActivityUncheckedLocked(pal.r, pal.sourceRecord,
-                                pal.grantedUriPermissions, pal.grantedMode, pal.onlyIfNeeded,
-                                doResume && i == (N-1));
+                                pal.grantedMode, pal.onlyIfNeeded, null);
         }
         mPendingActivityLaunches.clear();
     }

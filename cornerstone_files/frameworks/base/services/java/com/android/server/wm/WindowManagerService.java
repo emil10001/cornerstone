@@ -4746,7 +4746,7 @@ public class WindowManagerService extends IWindowManager.Stub
              changed |= ActivityInfo.CONFIG_LOCALE;
              wpConfig.locale = otherConfig.locale != null
                      ? (Locale) otherConfig.locale.clone() : null;
-             wpConfig.textLayoutDirection = LocaleUtil.getLayoutDirectionFromLocale(wpConfig.locale);
+             wpConfig.layoutDirection = LocaleUtil.getLayoutDirectionFromLocale(wpConfig.locale);
          }
          if (otherConfig.userSetLocale && (!wpConfig.userSetLocale || ((changed & ActivityInfo.CONFIG_LOCALE) != 0))){
                          wpConfig.userSetLocale = true;

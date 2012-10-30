@@ -1,5 +1,8 @@
 package com.onskreen.cornerstone.panel;
 
+import com.android.internal.R;
+iimport com.android.internal.util.XmlUtils;
+
 import android.app.Activity;
 import android.app.ActivityManagerNative;
 import android.app.ActivityManager;
@@ -194,7 +197,7 @@ public class CSPanel extends Activity {
             XmlResourceParser xpp = null;
             try {
                 Resources res = this.getResources();
-                xpp = res.getXml(R.xml.cornerstone);
+                xpp = res.getXml(com.android.internal.R.xml.cornerstone);
                 xpp.next();
                 int eventType = xpp.getEventType();
                 String tag;
