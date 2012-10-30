@@ -1,8 +1,5 @@
 package com.onskreen.cornerstone.panel;
 
-import com.android.internal.R;
-import com.android.internal.util.XmlUtils;
-
 import android.app.Activity;
 import android.app.ActivityManagerNative;
 import android.app.ActivityManager;

@@ -160,6 +160,7 @@ import java.util.List;
 
 import android.view.animation.TranslateAnimation;
 import java.util.Locale;
+import java.lang.Math;
 import android.util.LocaleUtil;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -1224,13 +1225,13 @@ public class WindowManagerService extends IWindowManager.Stub
          */
         mPolicy.enableKeyguard(false);
 
-        /*mFxSession = new SurfaceSession();
+        mFxSession = new SurfaceSession();
 
         Surface.openTransaction();
         createWatermark();
         Surface.closeTransaction();
 
-        ThemeUtils.registerThemeChangeReceiver(mContext, mThemeChangeReceiver);*/
+        ThemeUtils.registerThemeChangeReceiver(mContext, mThemeChangeReceiver);
     }
 
     private Context getUiContext() {
@@ -11722,7 +11723,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 mInnerFields.mDimming = true;
                 final WindowStateAnimator winAnimator = w.mWinAnimator;
                 if (!mAnimator.isDimming(winAnimator)) {
-                    final int width, height;
+                    final int width = innerDw;
+		    final int height = innerDh;
 
 		    /**
                      * Author: E. John Feig
@@ -12288,12 +12290,14 @@ public class WindowManagerService extends IWindowManager.Stub
 
                                                 if (DEBUG_ORIENTATION && win.mDrawPending) Slog.i(
                                                         TAG, "Resizing " + win + " WITH DRAW PENDING");
-                                                win.mClient.resized((int)win.mSurfaceW, (int)win.mSurfaceH,
-                                                        win.mLastContentInsets, win.mLastVisibleInsets, win.mDrawPending,
-                                                        configChanged ? wp.getConfiguration() : null);
-                                                win.mContentInsetsChanged = false;
-                                                win.mVisibleInsetsChanged = false;
-                                                win.mSurfaceResized = false;
+                                                int surfaceW = Math.round(win.mSurfaceW);
+                                                int surfaceH = Math.round(win.mSurfaceH);
+                                                try {
+                                                    win.mClient.resized(surfaceW, surfaceH, win.mLastContentInsets, win.mLastVisibleInsets, win.mDrawPending, configChanged ? wp.getConfiguration() : null);
+                                                    win.mContentInsetsChanged = false;
+                                                    win.mVisibleInsetsChanged = false;
+                                                    win.mSurfaceResized = false;
+                                                } catch(Exception ex){}
                     } else {
                         boolean configChanged =
                                                 win.mConfiguration != mCurConfiguration
@@ -12327,12 +12331,14 @@ public class WindowManagerService extends IWindowManager.Stub
 
                                                 if (DEBUG_ORIENTATION && win.mDrawPending) Slog.i(
                                                         TAG, "Resizing " + win + " WITH DRAW PENDING");
-                                                win.mClient.resized((int)win.mSurfaceW, (int)win.mSurfaceH,
-                                                        win.mLastContentInsets, win.mLastVisibleInsets, win.mDrawPending,
-                                                        configChanged ? win.mConfiguration : null);
-                                                win.mContentInsetsChanged = false;
-                                                win.mVisibleInsetsChanged = false;
-                                                win.mSurfaceResized = false;
+                                                int surfaceW = Math.round(win.mSurfaceW);
+                                                int surfaceH = Math.round(win.mSurfaceH);
+                                                try {
+                                                    win.mClient.resized(surfaceW, surfaceH, win.mLastContentInsets, win.mLastVisibleInsets, win.mDrawPending, configChanged ? win.mConfiguration : null);
+                                                    win.mContentInsetsChanged = false;
+                                                    win.mVisibleInsetsChanged = false;
+                                                    win.mSurfaceResized = false;
+                                                } catch(Exception ex){}
 
                                                 /**
                                                  * Original Implementation
