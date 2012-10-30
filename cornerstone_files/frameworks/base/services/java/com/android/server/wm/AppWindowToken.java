@@ -127,6 +127,7 @@ class AppWindowToken extends WindowToken {
         appToken = _token;
         mInputApplicationHandle = new InputApplicationHandle(this);
         mAnimator = service.mAnimator;
+	mService = _service;
         mAppAnimator = new AppWindowAnimator(_service, this);
     }
 
