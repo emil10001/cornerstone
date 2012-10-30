@@ -11723,8 +11723,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 mInnerFields.mDimming = true;
                 final WindowStateAnimator winAnimator = w.mWinAnimator;
                 if (!mAnimator.isDimming(winAnimator)) {
-                    final int width = innerDw;
-		    final int height = innerDh;
+                    int width = innerDw;
+		    int height = innerDh;
 
 		    /**
                      * Author: E. John Feig
