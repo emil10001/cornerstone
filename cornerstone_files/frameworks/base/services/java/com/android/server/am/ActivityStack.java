@@ -166,7 +166,7 @@ final class ActivityStack {
         DESTROYED
     }
 
-    final ActivityManagerService mService;
+    ActivityManagerService mService = null;
     final boolean mMainStack;
    
     /**
