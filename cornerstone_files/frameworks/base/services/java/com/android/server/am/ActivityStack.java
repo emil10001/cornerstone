@@ -167,7 +167,7 @@ final class ActivityStack {
     }
 
     ActivityManagerService mService = null;
-    final boolean mMainStack;
+    boolean mMainStack;
    
     /**
      * Author: Onskreen
@@ -175,9 +175,9 @@ final class ActivityStack {
      *
      * Cornerstone Specific Flags
      */
-    final boolean mCornerstoneStack;                    //Indicates stack is the cornerstone
-    final boolean mCornerstonePanelStack;               //Indicates stack is cornerstone panel
-    final int mCornerstonePanelIndex;                   //Index of cornerstone panel. Only valid for cs panel stacks
+    boolean mCornerstoneStack;                    //Indicates stack is the cornerstone
+    boolean mCornerstonePanelStack;               //Indicates stack is cornerstone panel
+    int mCornerstonePanelIndex;                   //Index of cornerstone panel. Only valid for cs panel stacks
     String mStackName;                                                  //Convenience for debug statements
 
     /**
@@ -203,7 +203,7 @@ final class ActivityStack {
     ActivityRecord mLastActivityConfigUpdated;
     int mLastActivityConfigUpdateChangeFlags;
 
-    final Context mContext;
+    Context mContext;
     
     /**
      * The back history of all previous (and possibly still
@@ -277,7 +277,7 @@ final class ActivityStack {
      * successfully paused the current activity and released our wake lock.
      * At that point the system is allowed to actually sleep.
      */
-    final PowerManager.WakeLock mGoingToSleep;
+    PowerManager.WakeLock mGoingToSleep;
 
     /**
      * We don't want to allow the device to go to sleep while in the process
@@ -285,7 +285,7 @@ final class ActivityStack {
      * receivers to launch an activity and get that to run before the device
      * goes back to sleep.
      */
-    final PowerManager.WakeLock mLaunchingActivity;
+    PowerManager.WakeLock mLaunchingActivity;
 
     /**
      * When we are in the process of pausing an activity, before starting the
@@ -365,7 +365,7 @@ final class ActivityStack {
 
     private static final ActivityTrigger mActivityTrigger;
 
-    private final PowerManagerService mPm;
+    private PowerManagerService mPm;
 
     static {
         if (SystemProperties.QCOM_HARDWARE) {
